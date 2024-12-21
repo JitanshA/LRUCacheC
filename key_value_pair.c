@@ -29,7 +29,7 @@ kv_pair_t *new_kv_pair(char *key, char *value)
     return kv_pair;
 }
 
-char *get_value(kv_pair_t *kv_pair)
+char *kv_pair_get_value(kv_pair_t *kv_pair)
 {
     if (!kv_pair)
     {
@@ -39,7 +39,7 @@ char *get_value(kv_pair_t *kv_pair)
     return kv_pair->value;
 }
 
-void set_value(kv_pair_t *kv_pair, char *new_value)
+void kv_pair_set_value(kv_pair_t *kv_pair, char *new_value)
 {
     if (!kv_pair)
     {
@@ -56,7 +56,7 @@ void set_value(kv_pair_t *kv_pair, char *new_value)
     kv_pair->value = new_value_dup;
 }
 
-char *get_key(kv_pair_t *kv_pair)
+char *kv_pair_get_key(kv_pair_t *kv_pair)
 {
     if (!kv_pair)
     {
@@ -77,7 +77,7 @@ void free_kv_pair(kv_pair_t *kv_pair)
     free(kv_pair);
 }
 
-int matches_key(kv_pair_t *kv_pair, char *key)
+int kv_pair_matches_key(kv_pair_t *kv_pair, char *key)
 {
     if (!kv_pair || !key) {
         return 0;
