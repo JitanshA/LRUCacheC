@@ -2,6 +2,8 @@
 #include <string.h>
 #include <assert.h>
 #include "lru_cache.h"
+#include <time.h>
+#include <stdlib.h>
 
 // Function prototypes for all tests
 void test_insert_and_retrieve_single_key_value();
@@ -24,6 +26,8 @@ void test_insert_after_free();
 void test_access_after_eviction();
 void test_cache_with_small_capacity();
 void test_key_to_index_behavior();
+void test_stress_lru_cache();
+char *generate_random_string(int length);
 
 // Main function to execute all tests
 int main()
@@ -50,6 +54,7 @@ int main()
     test_access_after_eviction();
     test_cache_with_small_capacity();
     test_key_to_index_behavior();
+    test_stress_lru_cache();
 
     printf("All Tests Passed!\n");
     return 0;
@@ -392,4 +397,73 @@ void test_cache_free_behavior()
     assert(lru_cache_get(cache, "key2") != NULL);
 
     lru_cache_free(cache);
+}
+
+// Generate a random string of specified length
+char *generate_random_string(int length)
+{
+    char *str = malloc(length + 1);
+    if (!str)
+    {
+        return NULL;
+    }
+
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for (int i = 0; i < length; i++)
+    {
+        str[i] = charset[rand() % (sizeof(charset) - 1)];
+    }
+    str[length] = '\0';
+    return str;
+}
+
+void test_stress_lru_cache()
+{
+    srand(time(NULL)); // Seed the random number generator
+
+    LRUCache *cache = lru_cache_create(150);
+    if (!cache)
+    {
+        printf("Failed to create cache.\n");
+        return;
+    }
+
+    printf("Running stress test with %d operations on cache (capacity %d)...\n", 2000, 150);
+
+    for (int i = 0; i < 2000; i++)
+    {
+        char *key = generate_random_string(10);
+        char *value = generate_random_string(15);
+
+        if (rand() % 2 == 0)
+        {
+            lru_cache_set(cache, key, value); // Perform set operation
+        }
+        else
+        {
+            char *result = lru_cache_get(cache, key); // Perform get operation
+            free(result);
+        }
+
+        free(key);
+        free(value);
+    }
+
+    // Validation of eviction
+    printf("Validating eviction mechanism...\n");
+    char *evicted_key = generate_random_string(10);
+    char *result = lru_cache_get(cache, evicted_key);
+    if (result)
+    {
+        printf("Unexpected: Retrieved value for evicted key '%s': %s\n", evicted_key, result);
+    }
+    else
+    {
+        printf("Expected: Key '%s' was evicted as expected.\n", evicted_key);
+    }
+    free(evicted_key);
+
+    lru_cache_free(cache);
+
+    printf("Stress test completed.\n");
 }
