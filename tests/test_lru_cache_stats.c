@@ -44,6 +44,26 @@ void test_statistics_output()
     lru_cache_free(cache);
 }
 
+void test_reset_stats()
+{
+    LRUCache *cache = lru_cache_create(2);
+
+    lru_cache_set(cache, "key1", "value1");
+    lru_cache_set(cache, "key2", "value2");
+    lru_cache_get(cache, "key1"); // Hit
+    lru_cache_get(cache, "key3"); // Miss
+
+    assert(cache->hits == 1);
+    assert(cache->misses == 3);
+
+    lru_cache_reset_stats(cache);
+
+    assert(cache->hits == 0);
+    assert(cache->misses == 0);
+
+    lru_cache_free(cache);
+}
+
 void run_test_lru_cache_stats()
 {
     printf("Running Stats tests for LRU Cache...\n");
@@ -51,5 +71,6 @@ void run_test_lru_cache_stats()
     test_cache_hit_and_miss();
     test_eviction();
     test_statistics_output();
+    test_reset_stats();
     printf("Stats tests passed!\n");
 }

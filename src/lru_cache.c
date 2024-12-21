@@ -219,6 +219,7 @@ void lru_cache_free(LRUCache *cache)
     free(cache);
 }
 
+// Print the stats for the cache
 void lru_cache_print_stats(LRUCache *cache)
 {
     if (!cache)
@@ -234,4 +235,54 @@ void lru_cache_print_stats(LRUCache *cache)
 
     printf("Hits: %d\nMisses: %d\nMiss Rate: %.2f%%\n",
            cache->hits, cache->misses, 100.0 * (double)cache->misses / (cache->misses + cache->hits));
+}
+
+void lru_cache_resize_cache(LRUCache *cache, int new_capacity) {
+    if (!cache || new_capacity <= 0 || new_capacity == cache->capacity) {
+        return;
+    }
+
+    // Evict extra nodes if downsizing
+    while (cache->size > new_capacity) {
+        evict_least_recently_used_block(cache);
+    }
+
+    Node **new_hash_table = calloc(new_capacity, sizeof(Node *));
+    if (!new_hash_table)
+    {
+        return;
+    }
+
+    // Rehash existing nodes into the new table
+    Node *current = cache->head;
+    while (current)
+    {
+        int new_index = key_to_index(kv_pair_get_key(current->kv_pair), new_capacity);
+        Node *next_node = current->next;
+
+        // Insert current node into the new hash table
+        current->next = new_hash_table[new_index];
+        if (new_hash_table[new_index])
+        {
+            new_hash_table[new_index]->prev = current;
+        }
+        new_hash_table[new_index] = current;
+
+        current = next_node;
+    }
+
+    free(cache->hash_table);
+    cache->hash_table = new_hash_table;
+    cache->capacity = new_capacity;
+}
+
+void lru_cache_reset_stats(LRUCache *cache)
+{
+    if (!cache)
+    {
+        return;
+    }
+
+    cache->hits = 0;
+    cache->misses = 0;
 }

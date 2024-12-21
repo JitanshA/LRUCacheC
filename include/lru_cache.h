@@ -30,4 +30,8 @@ extern void lru_cache_free(LRUCache *cache);
 // Method to print the stats for the cache
 extern void lru_cache_print_stats(LRUCache *cache);
 
+extern void lru_cache_resize_cache(LRUCache *cache, int new_capacity);
+
+extern void lru_cache_reset_stats(LRUCache *cache);
+
 #endif // LRU_CACHE_H
