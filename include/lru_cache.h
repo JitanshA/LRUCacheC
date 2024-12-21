@@ -8,6 +8,8 @@ typedef struct LRUCache
 {
     int capacity;
     int size;
+    int hits;
+    int misses;
     Node *head;
     Node *tail;
     Node **hash_table;
@@ -24,5 +26,8 @@ extern void lru_cache_set(LRUCache *cache, char *key, char *value);
 
 // Free all resources associated with the LRU cache
 extern void lru_cache_free(LRUCache *cache);
+
+// Method to print the stats for the cache
+extern void lru_cache_print_stats(LRUCache *cache);
 
 #endif // LRU_CACHE_H

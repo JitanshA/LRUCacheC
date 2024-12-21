@@ -3,6 +3,7 @@
 #include "node_utils.h"
 #include "hash_utils.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 // Evicts the least recently used block from the cache
 static void evict_least_recently_used_block(LRUCache *cache)
@@ -69,6 +70,8 @@ LRUCache *lru_cache_create(int capacity)
 
     cache->capacity = capacity;
     cache->size = 0;
+    cache->hits = 0;
+    cache->misses = 0;
     cache->head = NULL;
     cache->tail = NULL;
 
@@ -100,11 +103,14 @@ char *lru_cache_get(LRUCache *cache, char *key)
         if (kv_pair_matches_key(node->kv_pair, key))
         {
             move_node_to_front(cache, node);
+            cache->hits++;
             return kv_pair_get_value(node->kv_pair);
         }
 
         node = node->next;
     }
+
+    cache->misses++;
 
     return NULL;
 }
@@ -126,6 +132,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value)
         if (kv_pair_matches_key(node->kv_pair, key))
         {
             kv_pair_set_value(node->kv_pair, value);
+            cache->hits++;
             move_node_to_front(cache, node);
             return;
         }
@@ -178,6 +185,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value)
         cache->tail = new_node;
     }
 
+    cache->misses++;
     cache->size++;
 }
 
@@ -209,4 +217,21 @@ void lru_cache_free(LRUCache *cache)
     }
 
     free(cache);
+}
+
+void lru_cache_print_stats(LRUCache *cache)
+{
+    if (!cache)
+    {
+        return;
+    }
+
+    if (cache->misses + cache->hits == 0)
+    {
+        printf("No requests processed yet.\n");
+        return;
+    }
+
+    printf("Hits: %d\nMisses: %d\nMiss Rate: %.2f%%\n",
+           cache->hits, cache->misses, 100.0 * (double)cache->misses / (cache->misses + cache->hits));
 }

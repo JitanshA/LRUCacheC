@@ -11,7 +11,7 @@ BUILD_DIR = build
 # Targets and sources
 TARGET = test_lru_cache
 SRC_SOURCES = $(SRC_DIR)/lru_cache.c $(SRC_DIR)/node_utils.c $(SRC_DIR)/hash_utils.c $(SRC_DIR)/key_value_pair.c
-TEST_SOURCES = $(TEST_DIR)/test_lru_cache.c
+TEST_SOURCES = $(TEST_DIR)/test_main.c $(TEST_DIR)/test_lru_cache_basics.c $(TEST_DIR)/test_lru_cache_stats.c
 SOURCES = $(SRC_SOURCES) $(TEST_SOURCES)
 OBJECTS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SOURCES)))
 
@@ -39,3 +39,6 @@ clean:
 # Run tests
 test: $(TARGET)
 	./$(TARGET)
+
+# Phony targets
+.PHONY: all clean test
