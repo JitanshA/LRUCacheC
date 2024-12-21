@@ -176,4 +176,46 @@ void move_node_to_front(LRUCache *cache, Node *node) {
     }
 }
 
-void evict_least_recently_used_block(LRUCache *cache);
+void evict_least_recently_used_block(LRUCache *cache)
+{
+    if (!cache || !cache->tail)
+    {
+        return;
+    }
+
+    Node *node_to_evict = cache->tail;
+
+    int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
+
+    if (cache->hash_table[index] == node_to_evict)
+    {
+        cache->hash_table[index] = node_to_evict->next;
+    }
+    else
+    {
+        if (node_to_evict->prev)
+        {
+            node_to_evict->prev->next = node_to_evict->next;
+        }
+        if (node_to_evict->next)
+        {
+            node_to_evict->next->prev = node_to_evict->prev;
+        }
+    }
+
+    if (node_to_evict->prev)
+    {
+        node_to_evict->prev->next = NULL;
+    }
+    cache->tail = node_to_evict->prev;
+
+    if (cache->tail == NULL)
+    {
+        cache->head = NULL;
+    }
+
+    kv_free_kv_pair(node_to_evict->kv_pair);
+    free(node_to_evict);
+
+    cache->size--;
+}
