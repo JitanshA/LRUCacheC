@@ -16,7 +16,30 @@ typedef struct LRUCache {
     Node **hash_table;
 } LRUCache;
 
-LRUCache *lru_cache_create(int capacity);
+LRUCache *lru_cache_create(int capacity) {
+    if (capacity <= 0) {
+        return NULL;
+    }
+
+    LRUCache *cache = calloc(1, sizeof(LRUCache));
+
+    if (!cache) {
+        return NULL;
+    }
+
+    cache->capacity = capacity;
+    cache->size = 0;
+    cache->head = NULL;
+    cache->tail = NULL;
+
+    cache->hash_table = calloc(capacity, sizeof(Node *));
+    if (!cache->hash_table) {
+        free(cache);
+        return NULL;
+    }
+
+    return cache;
+}
 
 char *lru_cache_get(LRUCache *cache, char *key);
 
