@@ -1,0 +1,15 @@
+# Compiled object files
+*.o
+
+# Executables
+test_lru_cache
+
+# Debug files
+*.log
+*.out
+
+# Editor-specific files
+*.swp
+*.swo
+.vscode/
+.idea/

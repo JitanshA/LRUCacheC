@@ -1,5 +1,5 @@
-#include "lru_cache.h"
-#include "key_value_pair.h"
+#include "include/lru_cache.h"
+#include "include/key_value_pair.h"
 #include <stdlib.h>
 
 typedef struct Node {
