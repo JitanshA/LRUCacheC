@@ -124,7 +124,35 @@ void lru_cache_set(LRUCache *cache, char *key, char *value) {
     cache->size++;
 }
 
-void lru_cache_free(LRUCache *cache);
+void lru_cache_free(LRUCache *cache)
+{
+    if (!cache)
+    {
+        return;
+    }
+
+    Node *current = cache->head;
+    while (current)
+    {
+        Node *next = current->next;
+
+        if (current->kv_pair)
+        {
+            kv_free_kv_pair(current->kv_pair);
+        }
+
+        free(current);
+
+        current = next;
+    }
+
+    if (cache->hash_table)
+    {
+        free(cache->hash_table);
+    }
+
+    free(cache);
+}
 
 // A simple mapping function to get the index of key in cache
 // Will replace later with a more complex function, commonly used in a cache
