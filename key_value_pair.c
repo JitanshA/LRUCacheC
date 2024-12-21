@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-kv_pair_t *new_kv_pair(char *key, char *value)
+kv_pair_t *kv_new_kv_pair(char *key, char *value)
 {
     kv_pair_t *kv_pair = calloc(1, sizeof(kv_pair_t));
     if (!kv_pair)
@@ -66,7 +66,7 @@ char *kv_pair_get_key(kv_pair_t *kv_pair)
     return kv_pair->key;
 }
 
-void free_kv_pair(kv_pair_t *kv_pair)
+void kv_free_kv_pair(kv_pair_t *kv_pair)
 {
     if (!kv_pair) {
         return;
@@ -86,7 +86,7 @@ int kv_pair_matches_key(kv_pair_t *kv_pair, char *key)
     return strcmp(kv_pair->key, key) == 0;
 }
 
-void print_kv_pair(kv_pair_t *kv_pair)
+void kv_print_kv_pair(kv_pair_t *kv_pair)
 {
     if (!kv_pair || !kv_pair->key || !kv_pair->value)
     {

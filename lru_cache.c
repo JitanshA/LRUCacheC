@@ -62,7 +62,67 @@ char *lru_cache_get(LRUCache *cache, char *key) {
     return NULL;
 }
 
-void lru_cache_set(LRUCache *cache, char *key, char *value);
+void lru_cache_set(LRUCache *cache, char *key, char *value) {
+    if (!cache || !key || !value) {
+        return;
+    }
+
+    int index = key_to_index(key, cache->capacity);
+
+    Node *node = cache->hash_table[index];
+
+    while (node)
+    {
+        if (kv_pair_matches_key(key, node->kv_pair))
+        {
+            kv_pair_set_value(node->kv_pair, value);
+            move_node_to_front(cache, node);
+            return;
+        }
+
+        node = node->next;
+    }
+
+    if (cache->size == cache->capacity) {
+        evict_least_recently_used_block(cache);
+    }
+
+    kv_pair_t *new_pair = kv_new_kv_pair(key, value);
+    if (!new_pair) {
+        return;
+    }
+
+    Node *new_node = calloc(1, sizeof(Node));
+    if (!new_node) {
+        kv_free_kv_pair(new_pair);
+        return;
+    }
+
+    new_node->kv_pair = new_pair;
+
+    new_node->next = cache->hash_table[index];
+    if (cache->hash_table[index])
+    {
+        cache->hash_table[index]->prev = new_node;
+    }
+    cache->hash_table[index] = new_node;
+
+    new_node->next = cache->head;
+    new_node->prev = NULL;
+
+    if (cache->head)
+    {
+        cache->head->prev = new_node;
+    }
+    cache->head = new_node;
+
+    if (!cache->tail)
+    {
+        cache->tail = new_node;
+    }
+
+    cache->size++;
+}
 
 void lru_cache_free(LRUCache *cache);
 
@@ -115,3 +175,5 @@ void move_node_to_front(LRUCache *cache, Node *node) {
         cache->tail = node;
     }
 }
+
+void evict_least_recently_used_block(LRUCache *cache);
