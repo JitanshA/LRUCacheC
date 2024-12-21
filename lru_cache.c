@@ -154,22 +154,28 @@ void lru_cache_free(LRUCache *cache)
     free(cache);
 }
 
-// A simple mapping function to get the index of key in cache
-// Will replace later with a more complex function, commonly used in a cache
 int key_to_index(char *key, int capacity)
 {
-    if (!key || capacity <= 0) {
+    if (!key || capacity <= 0)
+    {
         return -1;
     }
 
-    int sum = 0;
-    while (*key)
+    unsigned long hash = djb2_hash(key);
+    return hash % capacity;
+}
+
+unsigned long djb2_hash(const char *key)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while ((c = *key++))
     {
-        sum += *key;
-        key++;
+        hash = ((hash << 5) + hash) + c;
     }
 
-    return sum % capacity;
+    return hash;
 }
 
 void move_node_to_front(LRUCache *cache, Node *node) {
