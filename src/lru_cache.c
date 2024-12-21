@@ -1,81 +1,8 @@
 #include "key_value_pair.h"
 #include "lru_cache.h"
+#include "node_utils.h"
+#include "hash_utils.h"
 #include <stdlib.h>
-
-typedef struct Node {
-    struct Node *next;
-    struct Node *prev;
-    kv_pair_t *kv_pair;
-} Node;
-
-typedef struct LRUCache {
-    int capacity;
-    int size;
-    Node *head;
-    Node *tail;
-    Node **hash_table;
-} LRUCache;
-
-static unsigned long djb2_hash(const char *key)
-{
-    unsigned long hash = 5381;
-    int c;
-
-    while ((c = *key++))
-    {
-        hash = ((hash << 5) + hash) + c;
-    }
-
-    return hash;
-}
-
-static int key_to_index(char *key, int capacity)
-{
-    if (!key || capacity <= 0)
-    {
-        return -1;
-    }
-
-    unsigned long hash = djb2_hash(key);
-    return hash % capacity;
-}
-
-static void move_node_to_front(LRUCache *cache, Node *node)
-{
-    if (!cache || !node || cache->head == node)
-    {
-        return;
-    }
-
-    if (node->next)
-    {
-        node->next->prev = node->prev;
-    }
-    if (node->prev)
-    {
-        node->prev->next = node->next;
-    }
-
-    if (cache->tail == node)
-    {
-        cache->tail = node->prev;
-    }
-
-    node->next = cache->head;
-    node->prev = NULL;
-
-    if (cache->head)
-    {
-        cache->head->prev = node;
-    }
-
-    cache->head = node;
-
-    if (!cache->tail)
-    {
-        cache->tail = node;
-    }
-}
 
 static void evict_least_recently_used_block(LRUCache *cache)
 {
@@ -121,14 +48,17 @@ static void evict_least_recently_used_block(LRUCache *cache)
     cache->size--;
 }
 
-LRUCache *lru_cache_create(int capacity) {
-    if (capacity <= 0) {
+LRUCache *lru_cache_create(int capacity)
+{
+    if (capacity <= 0)
+    {
         return NULL;
     }
 
     LRUCache *cache = calloc(1, sizeof(LRUCache));
 
-    if (!cache) {
+    if (!cache)
+    {
         return NULL;
     }
 
@@ -138,7 +68,8 @@ LRUCache *lru_cache_create(int capacity) {
     cache->tail = NULL;
 
     cache->hash_table = calloc(capacity, sizeof(Node *));
-    if (!cache->hash_table) {
+    if (!cache->hash_table)
+    {
         free(cache);
         return NULL;
     }

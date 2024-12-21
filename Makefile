@@ -5,29 +5,36 @@ INCLUDE = -Iinclude
 
 # Directories
 SRC_DIR = src
-INCLUDE_DIR = include
 TEST_DIR = tests
+BUILD_DIR = build
 
 # Targets and sources
 TARGET = test_lru_cache
-SRC_SOURCES = $(SRC_DIR)/lru_cache.c $(SRC_DIR)/key_value_pair.c
+SRC_SOURCES = $(SRC_DIR)/lru_cache.c $(SRC_DIR)/node_utils.c $(SRC_DIR)/hash_utils.c $(SRC_DIR)/key_value_pair.c
 TEST_SOURCES = $(TEST_DIR)/test_lru_cache.c
 SOURCES = $(SRC_SOURCES) $(TEST_SOURCES)
-OBJECTS = $(SOURCES:.c=.o)
+OBJECTS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(notdir $(SOURCES)))
 
 # Build the test executable
-all: $(TARGET)
+all: $(BUILD_DIR) $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $(TARGET) $(OBJECTS)
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ $(OBJECTS)
 
-# Rule to create object files
-%.o: %.c
+# Create build directory
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+# Rule to compile object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 # Clean up generated files
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET)
 
 # Run tests
 test: $(TARGET)

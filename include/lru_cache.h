@@ -2,8 +2,16 @@
 #define LRU_CACHE_H
 
 #include "key_value_pair.h"
+#include "node_utils.h"
 
-typedef struct LRUCache LRUCache;
+typedef struct LRUCache
+{
+    int capacity;
+    int size;
+    Node *head;
+    Node *tail;
+    Node **hash_table;
+} LRUCache;
 
 // Create a new LRU cache with a fixed capacity
 extern LRUCache *lru_cache_create(int capacity);
