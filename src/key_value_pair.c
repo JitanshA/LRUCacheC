@@ -1,6 +1,7 @@
 #include "key_value_pair.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 kv_pair_t *kv_new_kv_pair(char *key, char *value)
 {

@@ -16,6 +16,111 @@ typedef struct LRUCache {
     Node **hash_table;
 } LRUCache;
 
+static unsigned long djb2_hash(const char *key)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while ((c = *key++))
+    {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
+}
+
+static int key_to_index(char *key, int capacity)
+{
+    if (!key || capacity <= 0)
+    {
+        return -1;
+    }
+
+    unsigned long hash = djb2_hash(key);
+    return hash % capacity;
+}
+
+static void move_node_to_front(LRUCache *cache, Node *node)
+{
+    if (!cache || !node || cache->head == node)
+    {
+        return;
+    }
+
+    if (node->next)
+    {
+        node->next->prev = node->prev;
+    }
+    if (node->prev)
+    {
+        node->prev->next = node->next;
+    }
+
+    if (cache->tail == node)
+    {
+        cache->tail = node->prev;
+    }
+
+    node->next = cache->head;
+    node->prev = NULL;
+
+    if (cache->head)
+    {
+        cache->head->prev = node;
+    }
+
+    cache->head = node;
+
+    if (!cache->tail)
+    {
+        cache->tail = node;
+    }
+}
+
+static void evict_least_recently_used_block(LRUCache *cache)
+{
+    if (!cache || !cache->tail)
+    {
+        return;
+    }
+
+    Node *node_to_evict = cache->tail;
+
+    int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
+
+    if (cache->hash_table[index] == node_to_evict)
+    {
+        cache->hash_table[index] = node_to_evict->next;
+    }
+    else
+    {
+        if (node_to_evict->prev)
+        {
+            node_to_evict->prev->next = node_to_evict->next;
+        }
+        if (node_to_evict->next)
+        {
+            node_to_evict->next->prev = node_to_evict->prev;
+        }
+    }
+
+    if (node_to_evict->prev)
+    {
+        node_to_evict->prev->next = NULL;
+    }
+    cache->tail = node_to_evict->prev;
+
+    if (cache->tail == NULL)
+    {
+        cache->head = NULL;
+    }
+
+    kv_free_kv_pair(node_to_evict->kv_pair);
+    free(node_to_evict);
+
+    cache->size--;
+}
+
 LRUCache *lru_cache_create(int capacity) {
     if (capacity <= 0) {
         return NULL;
@@ -51,7 +156,7 @@ char *lru_cache_get(LRUCache *cache, char *key) {
     Node *node = cache->hash_table[index];
 
     while(node) {
-        if (kv_pair_matches_key(key, node->kv_pair)) {
+        if (kv_pair_matches_key(node->kv_pair, key)) {
             move_node_to_front(cache, node);
             return kv_pair_get_value(node->kv_pair);
         }
@@ -73,7 +178,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value) {
 
     while (node)
     {
-        if (kv_pair_matches_key(key, node->kv_pair))
+        if (kv_pair_matches_key(node->kv_pair, key))
         {
             kv_pair_set_value(node->kv_pair, value);
             move_node_to_front(cache, node);
@@ -152,104 +257,4 @@ void lru_cache_free(LRUCache *cache)
     }
 
     free(cache);
-}
-
-int key_to_index(char *key, int capacity)
-{
-    if (!key || capacity <= 0)
-    {
-        return -1;
-    }
-
-    unsigned long hash = djb2_hash(key);
-    return hash % capacity;
-}
-
-unsigned long djb2_hash(const char *key)
-{
-    unsigned long hash = 5381;
-    int c;
-
-    while ((c = *key++))
-    {
-        hash = ((hash << 5) + hash) + c;
-    }
-
-    return hash;
-}
-
-void move_node_to_front(LRUCache *cache, Node *node) {
-    if (!cache || !node || cache->head == node) {
-        return;
-    }
-
-    if (node->next) {
-        node->next->prev = node->prev;
-    }
-    if (node->prev) {
-        node->prev->next = node->next;
-    }
-
-    if (cache->tail == node) {
-        cache->tail = node->prev;
-    }
-
-    node->next = cache->head;
-    node->prev = NULL;
-
-    if (cache->head)
-    {
-        cache->head->prev = node;
-    }
-
-    cache->head = node;
-
-    if (!cache->tail)
-    {
-        cache->tail = node;
-    }
-}
-
-void evict_least_recently_used_block(LRUCache *cache)
-{
-    if (!cache || !cache->tail)
-    {
-        return;
-    }
-
-    Node *node_to_evict = cache->tail;
-
-    int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
-
-    if (cache->hash_table[index] == node_to_evict)
-    {
-        cache->hash_table[index] = node_to_evict->next;
-    }
-    else
-    {
-        if (node_to_evict->prev)
-        {
-            node_to_evict->prev->next = node_to_evict->next;
-        }
-        if (node_to_evict->next)
-        {
-            node_to_evict->next->prev = node_to_evict->prev;
-        }
-    }
-
-    if (node_to_evict->prev)
-    {
-        node_to_evict->prev->next = NULL;
-    }
-    cache->tail = node_to_evict->prev;
-
-    if (cache->tail == NULL)
-    {
-        cache->head = NULL;
-    }
-
-    kv_free_kv_pair(node_to_evict->kv_pair);
-    free(node_to_evict);
-
-    cache->size--;
 }

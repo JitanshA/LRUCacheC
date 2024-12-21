@@ -23,7 +23,7 @@ void test_cache_free_behavior();
 void test_insert_after_free();
 void test_access_after_eviction();
 void test_cache_with_small_capacity();
-void test_key_to_index_distribution();
+void test_key_to_index_behavior();
 
 // Main function to execute all tests
 int main()
@@ -49,7 +49,7 @@ int main()
     test_insert_after_free();
     test_access_after_eviction();
     test_cache_with_small_capacity();
-    test_key_to_index_distribution();
+    test_key_to_index_behavior();
 
     printf("All Tests Passed!\n");
     return 0;
@@ -369,16 +369,27 @@ void test_cache_with_small_capacity()
     printf("Test Passed: Cache with Small Capacity\n");
 }
 
-// Test: Key-to-index distribution
-void test_key_to_index_distribution()
+void test_key_to_index_behavior()
 {
-    int capacity = 10;
-    for (int i = 0; i < 100; i++)
-    {
-        char key[16];
-        snprintf(key, sizeof(key), "key%d", i);
-        int index = key_to_index(key, capacity);
-        assert(index >= 0 && index < capacity);
-    }
-    printf("Test Passed: Key-to-Index Distribution\n");
+    LRUCache *cache = lru_cache_create(10);
+    lru_cache_set(cache, "key1", "value1");
+    assert(strcmp(lru_cache_get(cache, "key1"), "value1") == 0);
+
+    lru_cache_set(cache, "key2", "value2");
+    assert(strcmp(lru_cache_get(cache, "key2"), "value2") == 0);
+
+    lru_cache_free(cache);
+}
+
+void test_cache_free_behavior()
+{
+    LRUCache *cache = lru_cache_create(5);
+
+    lru_cache_set(cache, "key1", "value1");
+    lru_cache_set(cache, "key2", "value2");
+
+    assert(lru_cache_get(cache, "key1") != NULL);
+    assert(lru_cache_get(cache, "key2") != NULL);
+
+    lru_cache_free(cache);
 }

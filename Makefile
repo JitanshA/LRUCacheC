@@ -10,7 +10,9 @@ TEST_DIR = tests
 
 # Targets and sources
 TARGET = test_lru_cache
-SOURCES = $(SRC_DIR)/lru_cache.c $(SRC_DIR)/key_value_pair.c $(TEST_DIR)/test_lru_cache.c
+SRC_SOURCES = $(SRC_DIR)/lru_cache.c $(SRC_DIR)/key_value_pair.c
+TEST_SOURCES = $(TEST_DIR)/test_lru_cache.c
+SOURCES = $(SRC_SOURCES) $(TEST_SOURCES)
 OBJECTS = $(SOURCES:.c=.o)
 
 # Build the test executable
@@ -19,6 +21,7 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $(TARGET) $(OBJECTS)
 
+# Rule to create object files
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
 
