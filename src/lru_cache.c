@@ -115,10 +115,16 @@ char *lru_cache_get(LRUCache *cache, char *key)
     return NULL;
 }
 
-// Inserts or updates a key-value pair in the cache
+// Inserts or updates a key-value pair in the cache with a default expiration (2 hours)
 void lru_cache_set(LRUCache *cache, char *key, char *value)
 {
-    if (!cache || !key || !value)
+    lru_cache_set_with_expiration(cache, key, value, DEFAULT_EXPIRATION_TIME);
+}
+
+// Inserts or updates a key-value pair in the cache with custom expiration
+void lru_cache_set_with_expiration(LRUCache *cache, char *key, char *value, int ttl_seconds)
+{
+    if (!cache || !key || !value || ttl_seconds <= 0)
     {
         return;
     }
@@ -132,6 +138,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value)
         if (kv_pair_matches_key(node->kv_pair, key))
         {
             kv_pair_set_value(node->kv_pair, value);
+            node->expiration = time(NULL) + ttl_seconds; // Update expiration
             cache->hits++;
             move_node_to_front(cache, node);
             return;
@@ -146,7 +153,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value)
         evict_least_recently_used_block(cache);
     }
 
-    // Create a new key-value pair and node
+    // Create a new key-value pair
     kv_pair_t *new_pair = kv_new_kv_pair(key, value);
     if (!new_pair)
     {
@@ -161,6 +168,7 @@ void lru_cache_set(LRUCache *cache, char *key, char *value)
     }
 
     new_node->kv_pair = new_pair;
+    new_node->expiration = time(NULL) + ttl_seconds; // Set custom expiration
 
     // Insert the new node into the hash table
     new_node->next = cache->hash_table[index];

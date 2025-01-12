@@ -4,6 +4,8 @@
 #include "key_value_pair.h"
 #include "node_utils.h"
 
+#define DEFAULT_EXPIRATION_TIME 7200
+
 typedef struct LRUCache
 {
     int capacity;
@@ -33,5 +35,7 @@ extern void lru_cache_print_stats(LRUCache *cache);
 extern void lru_cache_resize_cache(LRUCache *cache, int new_capacity);
 
 extern void lru_cache_reset_stats(LRUCache *cache);
+
+extern void lru_cache_set_with_expiration(LRUCache *cache, char *key, char *value, int ttl_seconds);
 
 #endif // LRU_CACHE_H
