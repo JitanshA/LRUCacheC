@@ -1,6 +1,7 @@
 #include "node_utils.h"
 #include "lru_cache.h" // Include full definition of LRUCache
 #include <stdlib.h>
+#include <time.h>
 
 // Moves a node to the front of the doubly linked list in the cache
 void move_node_to_front(struct LRUCache *cache, Node *node)

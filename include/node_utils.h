@@ -2,6 +2,7 @@
 #define NODE_UTILS_H
 
 #include "key_value_pair.h"
+#include <time.h>
 
 struct LRUCache; 
 
@@ -10,6 +11,7 @@ typedef struct Node
     struct Node *next;
     struct Node *prev;
     kv_pair_t *kv_pair;
+    time_t expiration;
 } Node;
 
 // Move a node to the front of the doubly linked list
