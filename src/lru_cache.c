@@ -5,6 +5,59 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// Removes all expired nodes from the cache
+static void remove_expired_nodes(LRUCache *cache)
+{
+    if (!cache)
+    {
+        return;
+    }
+
+    Node *current = cache->head;
+    while (current)
+    {
+        Node *next_node = current->next;
+
+        if (current->expiration < time(NULL))
+        {
+            // Remove from hash table
+            int index = key_to_index(kv_pair_get_key(current->kv_pair), cache->capacity);
+            if (cache->hash_table[index] == current)
+            {
+                cache->hash_table[index] = current->next;
+            }
+            else
+            {
+                if (current->prev)
+                {
+                    current->prev->next = current->next;
+                }
+                if (current->next)
+                {
+                    current->next->prev = current->prev;
+                }
+            }
+
+            // Update head and tail pointers
+            if (cache->head == current)
+            {
+                cache->head = current->next;
+            }
+            if (cache->tail == current)
+            {
+                cache->tail = current->prev;
+            }
+
+            // Free the node
+            kv_free_kv_pair(current->kv_pair);
+            free(current);
+            cache->size--;
+        }
+
+        current = next_node;
+    }
+}
+
 // Evicts the least recently used block from the cache
 static void evict_least_recently_used_block(LRUCache *cache)
 {
@@ -330,6 +383,15 @@ void lru_cache_print_stats(LRUCache *cache)
 
 void lru_cache_resize_cache(LRUCache *cache, int new_capacity) {
     if (!cache || new_capacity <= 0 || new_capacity == cache->capacity) {
+        return;
+    }
+
+    // Remove all expired nodes first
+    remove_expired_nodes(cache);
+
+    // If the size is already within the new capacity, no need to resize
+    if (cache->size <= new_capacity)
+    {
         return;
     }
 
