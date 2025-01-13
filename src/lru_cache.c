@@ -66,93 +66,45 @@ static void evict_least_recently_used_block(LRUCache *cache)
         return;
     }
 
-    while (cache->tail && cache->tail->expiration < time(NULL))
+    Node *node_to_evict = cache->tail;
+
+    // Find the hash table index for the node to be evicted
+    int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
+
+    // Remove the node from the hash table
+    if (cache->hash_table[index] == node_to_evict)
     {
-        // The tail node has expired, evict it
-        Node *node_to_evict = cache->tail;
-
-        // Find the hash table index for the node to be evicted
-        int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
-
-        // Remove the node from the hash table
-        if (cache->hash_table[index] == node_to_evict)
-        {
-            cache->hash_table[index] = node_to_evict->next;
-        }
-        else
-        {
-            if (node_to_evict->prev)
-            {
-                node_to_evict->prev->next = node_to_evict->next;
-            }
-            if (node_to_evict->next)
-            {
-                node_to_evict->next->prev = node_to_evict->prev;
-            }
-        }
-
-        // Update the tail pointer of the doubly linked list
+        cache->hash_table[index] = node_to_evict->next;
+    }
+    else
+    {
         if (node_to_evict->prev)
         {
-            node_to_evict->prev->next = NULL;
+            node_to_evict->prev->next = node_to_evict->next;
         }
-        cache->tail = node_to_evict->prev;
-
-        // If the cache is empty, update the head pointer as well
-        if (cache->tail == NULL)
+        if (node_to_evict->next)
         {
-            cache->head = NULL;
+            node_to_evict->next->prev = node_to_evict->prev;
         }
-
-        kv_free_kv_pair(node_to_evict->kv_pair);
-        free(node_to_evict);
-
-        cache->size--;
     }
 
-    // If no expired nodes were found and eviction is still required
-    if (cache->tail)
+    // Update the tail pointer of the doubly linked list
+    if (node_to_evict->prev)
     {
-        Node *node_to_evict = cache->tail;
-
-        // Find the hash table index for the node to be evicted
-        int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
-
-        // Remove the node from the hash table
-        if (cache->hash_table[index] == node_to_evict)
-        {
-            cache->hash_table[index] = node_to_evict->next;
-        }
-        else
-        {
-            if (node_to_evict->prev)
-            {
-                node_to_evict->prev->next = node_to_evict->next;
-            }
-            if (node_to_evict->next)
-            {
-                node_to_evict->next->prev = node_to_evict->prev;
-            }
-        }
-
-        // Update the tail pointer of the doubly linked list
-        if (node_to_evict->prev)
-        {
-            node_to_evict->prev->next = NULL;
-        }
-        cache->tail = node_to_evict->prev;
-
-        // If the cache is empty, update the head pointer as well
-        if (cache->tail == NULL)
-        {
-            cache->head = NULL;
-        }
-
-        kv_free_kv_pair(node_to_evict->kv_pair);
-        free(node_to_evict);
-
-        cache->size--;
+        node_to_evict->prev->next = NULL;
     }
+    cache->tail = node_to_evict->prev;
+
+    // If the cache is empty, update the head pointer as well
+    if (cache->tail == NULL)
+    {
+        cache->head = NULL;
+    }
+
+    kv_free_kv_pair(node_to_evict->kv_pair);
+    free(node_to_evict);
+
+    cache->size--;
 }
 
 // Creates a new LRU cache with the given capacity
