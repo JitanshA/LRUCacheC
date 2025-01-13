@@ -13,45 +13,93 @@ static void evict_least_recently_used_block(LRUCache *cache)
         return;
     }
 
-    Node *node_to_evict = cache->tail;
-
-    // Find the hash table index for the node to be evicted
-    int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
-
-    // Remove the node from the hash table
-    if (cache->hash_table[index] == node_to_evict)
+    while (cache->tail && cache->tail->expiration < time(NULL))
     {
-        cache->hash_table[index] = node_to_evict->next;
-    }
-    else
-    {
+        // The tail node has expired, evict it
+        Node *node_to_evict = cache->tail;
+
+        // Find the hash table index for the node to be evicted
+        int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
+
+        // Remove the node from the hash table
+        if (cache->hash_table[index] == node_to_evict)
+        {
+            cache->hash_table[index] = node_to_evict->next;
+        }
+        else
+        {
+            if (node_to_evict->prev)
+            {
+                node_to_evict->prev->next = node_to_evict->next;
+            }
+            if (node_to_evict->next)
+            {
+                node_to_evict->next->prev = node_to_evict->prev;
+            }
+        }
+
+        // Update the tail pointer of the doubly linked list
         if (node_to_evict->prev)
         {
-            node_to_evict->prev->next = node_to_evict->next;
+            node_to_evict->prev->next = NULL;
         }
-        if (node_to_evict->next)
+        cache->tail = node_to_evict->prev;
+
+        // If the cache is empty, update the head pointer as well
+        if (cache->tail == NULL)
         {
-            node_to_evict->next->prev = node_to_evict->prev;
+            cache->head = NULL;
         }
+
+        kv_free_kv_pair(node_to_evict->kv_pair);
+        free(node_to_evict);
+
+        cache->size--;
     }
 
-    // Update the tail pointer of the doubly linked list
-    if (node_to_evict->prev)
+    // If no expired nodes were found and eviction is still required
+    if (cache->tail)
     {
-        node_to_evict->prev->next = NULL;
+        Node *node_to_evict = cache->tail;
+
+        // Find the hash table index for the node to be evicted
+        int index = key_to_index(kv_pair_get_key(node_to_evict->kv_pair), cache->capacity);
+
+        // Remove the node from the hash table
+        if (cache->hash_table[index] == node_to_evict)
+        {
+            cache->hash_table[index] = node_to_evict->next;
+        }
+        else
+        {
+            if (node_to_evict->prev)
+            {
+                node_to_evict->prev->next = node_to_evict->next;
+            }
+            if (node_to_evict->next)
+            {
+                node_to_evict->next->prev = node_to_evict->prev;
+            }
+        }
+
+        // Update the tail pointer of the doubly linked list
+        if (node_to_evict->prev)
+        {
+            node_to_evict->prev->next = NULL;
+        }
+        cache->tail = node_to_evict->prev;
+
+        // If the cache is empty, update the head pointer as well
+        if (cache->tail == NULL)
+        {
+            cache->head = NULL;
+        }
+
+        kv_free_kv_pair(node_to_evict->kv_pair);
+        free(node_to_evict);
+
+        cache->size--;
     }
-    cache->tail = node_to_evict->prev;
-
-    // If the cache is empty, update the head pointer as well
-    if (cache->tail == NULL)
-    {
-        cache->head = NULL;
-    }
-
-    kv_free_kv_pair(node_to_evict->kv_pair);
-    free(node_to_evict);
-
-    cache->size--;
 }
 
 // Creates a new LRU cache with the given capacity
@@ -102,6 +150,41 @@ char *lru_cache_get(LRUCache *cache, char *key)
     {
         if (kv_pair_matches_key(node->kv_pair, key))
         {
+            if (node->expiration < time(NULL))
+            {
+                // Remove the expired node directly
+                if (node->prev)
+                {
+                    node->prev->next = node->next;
+                }
+                if (node->next)
+                {
+                    node->next->prev = node->prev;
+                }
+
+                if (cache->head == node)
+                {
+                    cache->head = node->next;
+                }
+                if (cache->tail == node)
+                {
+                    cache->tail = node->prev;
+                }
+
+                // Remove from hash table
+                if (cache->hash_table[index] == node)
+                {
+                    cache->hash_table[index] = node->next;
+                }
+
+                kv_free_kv_pair(node->kv_pair);
+                free(node);
+
+                cache->size--;
+                cache->misses++;
+                return NULL;
+            }
+
             move_node_to_front(cache, node);
             cache->hits++;
             return kv_pair_get_value(node->kv_pair);
